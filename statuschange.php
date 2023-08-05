@@ -11,31 +11,35 @@ class StatusChangePlugin extends Plugin
 {
     public $config_class = "StatusChangePluginConfig";
 
-    private static $pluginInstance = null;
-
-    private function getPluginInstance(?int $id)
-    {
-        if ($id && ($i = $this->getInstance($id))) {
-            return $i;
-        }
-
-        return $this->getInstances()->first();
-    }
+    private static $instanceConfig = null;
 
     public function bootstrap()
     {
-        self::$pluginInstance = self::getPluginInstance(null);
+        $pluginInstance = new StatusChangePlugin();
+        $pluginInstance->instanceConfig = $this->getConfig();
 
-        Signal::connect('object.created', [$this, 'statusChange'], 'Ticket', function ($object, $type) {
-                return $type['type'] == 'message' && isset($type['uid']);
-                });
+        Signal::connect('object.created', [$pluginInstance, 'statusChange'], 'Ticket', function ($object, $type) {
+                    return $type['type'] == 'message'/* && isset($type['uid'])*/;
+        });
     }
 
     public function statusChange($ticket, $type)
     {
-        $config = $this->getConfig(self::$pluginInstance);
+        $config = $this->instanceConfig;
+        if (!($config instanceof PluginConfig)) {
+            return;
+        }
 
-        if ($type['type'] != 'message' || !isset($type['uid'])) return;
+        $by = $config->get('statuschange-by');
+        if ($type['type'] != 'message') {
+            return;
+        }
+        if (isset($type['uid']) && !isset($by['user'])) {
+            return;
+        }
+        if (!isset($type['uid']) && !isset($by['agent'])) {
+            return;
+        }
 
         $from = $config->get('statuschange-from');
         $to = $config->get('statuschange-to');

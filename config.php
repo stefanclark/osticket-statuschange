@@ -41,6 +41,12 @@ class StatusChangePluginConfig extends PluginConfig
             'statuschange' => new SectionBreakField(array(
                 'label' => 'Status Change Plugin',
             )),
+            'statuschange-by' => new ChoiceField(array(
+                'label' => $__('Change status by'),
+                'hint' => $__('Who can trigger a status change'),
+                'choices' => array('agent' => 'Agent (staff)', 'user' => 'User (client)'),
+                'configuration' => array('multiselect' => true),
+            )),
             'statuschange-from' => new ChoiceField(array(
                 'label' => $__('Current status'),
                 'hint' => $__('Status that you wish to change from on new ticket message'),

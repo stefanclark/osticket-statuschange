@@ -11,7 +11,8 @@ class StatusChangePlugin extends Plugin
 {
     public $config_class = "StatusChangePluginConfig";
 
-    private static $instanceConfig = null;
+    private $instanceConfig = null;
+    private static $changed = false;
 
     public function bootstrap()
     {
@@ -45,11 +46,14 @@ class StatusChangePlugin extends Plugin
         $to = $config->get('statuschange-to');
         if (!empty($from) && !empty($to)) {
             $status = $ticket->getStatusId();
-            if ($status == $from) {
-                $ticket->setStatus($to);
-                $this->log(__FUNCTION__ . ": Updating status ($from => $to)");
-            } else {
+            if ($status != $from) {
                 $this->log(__FUNCTION__ . ": Current status does not match ($status != $from)");
+            } elseif (self::$changed) {
+                $this->log(__FUNCTION__ . ": Already changed ($from => $to)");
+            } else {
+                $ticket->setStatus($to);
+                self::$changed = true;
+                $this->log(__FUNCTION__ . ": Updating status ($from => $to)");
             }
         } else {
             $this->log(__FUNCTION__ . ': Status from/to not configured', LOG_WARN);
